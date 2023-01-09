@@ -4,11 +4,29 @@ from MTM import matchTemplates
 
 @singleton
 class Processor:
+    '''
+    Processor class for the application to handle the image processing.
+
+    ### Functions:
+    - `reset`: Reset the processor.
+    - `get_counters_in_frame`: Get a list of counters in the frame.
+    - `get_counters_saved`: Get a list of previously split counters.
+    - `extract_digits`: Get the value of the counter.
+    '''
 
     REAL_TIME_REACTIVE = True
     DEBUG_MODE = False
 
     def __init__(self, template_path:str = "images/templates"):
+        '''
+        Constructor of the processor class.
+
+        ### Parameters:
+        - `template_path`: The path of the templates folder.
+
+        ### Returns:
+        - `None`: Nothing
+        '''
         self.__utils__ = Utils()
         # Load the counters json
         self.__counters_config__ = self.__utils__.loadJson("config/counters.json")
@@ -26,7 +44,7 @@ class Processor:
                     if os.path.isfile(file_path):
                         # Rename the file with the new name
                         try:
-                            image = cv2.imread(file_path)
+                            image = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
                             self.__templates__.append( (file.split(".")[0], image) )
                         except Exception as e:
                             print(e)
@@ -94,7 +112,7 @@ class Processor:
         if self.DEBUG_MODE:
             print(f'{"Getting the counters from the previous frame":.^100}')
         return self.__counters_frames__
-    
+
     def extract_digits(self, counter: cv2.Mat) -> int:
         '''
         Extract the digits from the counter.
@@ -110,12 +128,12 @@ class Processor:
             print(f'\n{"Extracting digits from the counter":.^100}\n')
             print(f'{"Resizing the counter to equals size than templates":.^100}')
             print(f"Counter shape: {counter.shape}")
-            # print(f'{"Transforming to gray":.^100}')
+            print(f'{"Transforming to gray":.^100}')
         # Transform the counter image to gray scale
-        # gray: cv2.Mat = cv2.cvtColor(counter, cv2.COLOR_BGR2GRAY)
-        # if self.DEBUG_MODE:
-            # print(f"Gray shape: {gray.shape}")
-            # cv2.imshow("Gray", gray)
+        gray: cv2.Mat = cv2.cvtColor(counter, cv2.COLOR_BGR2GRAY)
+        if self.DEBUG_MODE:
+            print(f"Gray shape: {gray.shape}")
+            cv2.imshow("Gray", gray)
         # Get the digits per counter from the config
         digits_per_counter = self.__utils__.getValueOf(self.__counters_config__, "digits_per_counter")
         digits_per_counter = digits_per_counter if digits_per_counter is not None else 4
