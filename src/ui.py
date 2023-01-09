@@ -130,11 +130,17 @@ class Window:
         successfully = True
         # For each counter previusly processed, extract all the digits
         counters = self.processor.get_counters_saved()
-        for counter in counters:
+        for index, counter in enumerate(counters):
             # Extract the digits
             digits = self.processor.extract_digits(counter = counter)
-            # TODO: Show the digits in the ui
-            pass
+            # Show the digits in the ui
+            label = self.ui.__dict__.get(f"resultado{str(index+1)}", None)
+            if label is None:
+                print(f"WARN: resultado{index+1} not found")
+                successfully = False
+                continue
+            # Set the text to the viewer label
+            label.setText(str(digits))
         return successfully
 
     def __global_event__(self) -> bool:
@@ -146,12 +152,12 @@ class Window:
         if not sucessfully:
             return False
         # Simulate a press to the clip button
-        sucessfullt = self.__clip_event__()
+        sucessfully = self.__clip_event__()
         if not sucessfully:
             return False
         # Simulate a press to the extract button
         return self.__extract_event__()
-    
+
     def __adapt_to_viewer__(self, viewer:QLabel, frame:np.ndarray) -> np.ndarray:
         '''
         ### Private method.
@@ -170,7 +176,7 @@ class Window:
         width, height = viewer.width(), viewer.height()
         # Resize the frame
         print(f"INFO: Resizing frame to {width}x{height}")
-        print(f"INFO: Frame shape: {frame.shape}")
+        print(f"INFO: Previous frame shape: {frame.shape}")
         try:
             frame = cv2.resize(frame, dsize=(width, height), interpolation=cv2.INTER_CUBIC)
         except Exception as e:

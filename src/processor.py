@@ -1,12 +1,12 @@
 from utils import singleton, Utils
-import numpy as np, cv2, os
+import numpy as np, cv2, os, pandas as pd
 from MTM import matchTemplates
 
 @singleton
 class Processor:
 
     REAL_TIME_REACTIVE = True
-    DEBUG_MODE = True
+    DEBUG_MODE = False
 
     def __init__(self, template_path:str = "images/templates"):
         self.__utils__ = Utils()
@@ -17,9 +17,12 @@ class Processor:
         template_path = self.__utils__.getAbsolutePath(template_path)
         for filename in os.listdir(template_path):
             image = cv2.imread(os.path.join(template_path, filename))
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+            # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
             self.__templates__.append( (filename.split(".")[0], image) )
-        # Initialize variables
+        # Check the integrity of the templates
+        if len(self.__templates__) == 0:
+            raise Exception("No templates were loaded.")
+        # Reset the processor
         self.reset()
 
     def reset(self) -> bool:
@@ -77,9 +80,10 @@ class Processor:
         ### Returns:
         - `list`: A list of counters (numpy.ndarray -> images) in the frame.
         '''
+        print(f'{"Getting the counters from the previous frame":.^100}')
         return self.__counters_frames__
 
-    def extract_digits(self, counter: np.ndarray) -> int:
+    def extract_digits(self, counter: cv2.Mat) -> int:
         '''
         Extract the digits from the counter.
 
@@ -87,17 +91,20 @@ class Processor:
         - `counter`: The counter to be processed.
 
         ### Returns:
-        - `int`: The value of the counter.
+        - `str`: The value of the counter. If the counter is not valid, the value can contain the character `?`.
         '''
-        value: int = 0
+        value: str = ""
+        gray = counter.copy()
         if self.DEBUG_MODE:
-            print(f'{"Extracting digits from the counter":.^100}')
-            print(f'{"Transforming to gray":.^100}')
+            print(f'\n{"Extracting digits from the counter":.^100}\n')
+            print(f'{"Resizing the counter to equals size than templates":.^100}')
+            print(f"Counter shape: {counter.shape}")
+            # print(f'{"Transforming to gray":.^100}')
         # Transform the counter image to gray scale
-        gray = cv2.cvtColor(counter, cv2.COLOR_BGR2GRAY)
-        if self.DEBUG_MODE:
-            cv2.imshow("Gray", gray)
-            print(f"Gray shape: {gray.shape}")
+        # gray: cv2.Mat = cv2.cvtColor(counter, cv2.COLOR_BGR2GRAY)
+        # if self.DEBUG_MODE:
+            # print(f"Gray shape: {gray.shape}")
+            # cv2.imshow("Gray", gray)
         # Get the digits per counter from the config
         digits_per_counter = self.__utils__.getValueOf(self.__counters_config__, "digits_per_counter")
         digits_per_counter = digits_per_counter if digits_per_counter is not None else 4
@@ -106,10 +113,13 @@ class Processor:
         height = gray.shape[0]
         if self.DEBUG_MODE:
             print(f'{"Splitting the counter in digits":.^100}')
-            print(f"Counter shape: (width: {width}), (height: {height})")
+            print(f"Counter shape for each digit: (width: {width}), (height: {height})")
         digits = []
         for i in range(digits_per_counter):
-            digits.append(gray[0:height, i*width:(i+1)*width])
+            image = gray[0:height, i*width:(i+1)*width]
+            # Resize the image to the template size
+            image = cv2.resize(image, (self.__templates__[0][1].shape[1], self.__templates__[0][1].shape[0]), interpolation=cv2.INTER_CUBIC)
+            digits.append(image)
         if self.DEBUG_MODE:
             # Show the digits
             for i in range(digits_per_counter):
@@ -117,20 +127,32 @@ class Processor:
         # Get the values the search of template
         score_threshold = self.__utils__.getValueOf(self.__counters_config__, "score_threshold")
         score_threshold = score_threshold if score_threshold is not None else 0.6
+        maxOverlap = self.__utils__.getValueOf(self.__counters_config__, "max_overlap")
+        maxOverlap = maxOverlap if maxOverlap is not None else 0.6
         searchBox = self.__utils__.getValueOf(self.__counters_config__, "search_box")
-        searchBox = searchBox if searchBox is not None else (0, 0, 90, 130)
+        searchBox = searchBox if searchBox is not None else (0, 0, self.__templates__[0][1].shape[1], self.__templates__[0][1].shape[0])
         for i in range(digits_per_counter):
             if self.DEBUG_MODE:
-                print(f'{"Searching the digit":.^100}')
+                cv2.imshow(f"Digit {i}", digits[i])
+                template = self.__templates__[0][1]
+                cv2.imshow(f"Template {i}", template)
+                print(f'\n\n{"Searching the digit":.^100}\n')
+                print(f"Parameters to search template: score_threshold: {score_threshold}, maxOverlap: {maxOverlap}, searchBox: {searchBox}")
             digit = digits[i]
             # Search the digit in the templates
-            digit_value_filename = matchTemplates(listTemplates=self.__templates__, image=digit, method=cv2.TM_CCOEFF_NORMED, score_threshold=score_threshold, searchBox=searchBox)
+            match_response: pd.DataFrame = matchTemplates(listTemplates=self.__templates__, image=digit, method=cv2.TM_CCOEFF_NORMED, score_threshold=score_threshold, searchBox=searchBox, maxOverlap=maxOverlap)
             if self.DEBUG_MODE:
-                print(f'Digit {i} value: {digit_value_filename}')
-            digit_value = 0
-            if digit_value is None:
-                continue
+                print(f'Digit {i} response of match:\n {match_response}')
+            # Transform the response to a digit value 
+            digit_value = "?"
+            if match_response is not None and not match_response.empty:
+                digit_value = int(match_response.get("TemplateName").values[0].split("_")[0])
             # Append the digit value to the value
-            value += digit_value * (10 ** (digits_per_counter - i - 1))
-        
+            value += str(digit_value)
+        # Adapt the valut of counter with the coma
+        decimals_after_coma = self.__utils__.getValueOf(self.__counters_config__, "decimals_after_coma")
+        decimals_after_coma = decimals_after_coma if decimals_after_coma is not None else 0
+        if decimals_after_coma > 0:
+            value = value[:-decimals_after_coma] + "." + value[-decimals_after_coma:]
+        # Return the value of the counter
         return value

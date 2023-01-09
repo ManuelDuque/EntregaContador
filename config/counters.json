@@ -1,7 +1,8 @@
 {
     "digits_per_counter": 4,
+    "decimals_after_coma": 1,
     "score_threshold": 0.6,
-    "search_box": [0, 0, 90, 130],
+    "max_overlap": 0.6,
     "counters": [
         {
             "x": 285,
