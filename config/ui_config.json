@@ -1,0 +1,12 @@
+{
+    "ui": {
+        "title": "Contadores",
+        "ui_relative_path": "mainwindow.ui"
+    },
+    "images": {
+        "folder_relative_path": "images/sources",
+        "template_relative_path": "images/templates",
+        "load_dialog_caption": "Select an image",
+        "load_dialog_filter": "Images (*.png *.xpm *.jpg)"
+    }
+}

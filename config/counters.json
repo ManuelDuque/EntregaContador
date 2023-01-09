@@ -1,0 +1,25 @@
+{
+    "digits_per_counter": 4,
+    "score_threshold": 0.6,
+    "search_box": [0, 0, 90, 130],
+    "counters": [
+        {
+            "x": 285,
+            "y": 155,
+            "width": 115,
+            "height": 45
+        },
+        {
+            "x": 285,
+            "y": 233,
+            "width": 115,
+            "height": 45
+        },
+        {
+            "x": 283,
+            "y": 315,
+            "width": 116,
+            "height": 45
+        }
+    ]
+}
