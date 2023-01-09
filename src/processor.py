@@ -93,7 +93,6 @@ class Processor:
         ### Returns:
         - `str`: The value of the counter. If the counter is not valid, the value can contain the character `?`.
         '''
-        value: str = ""
         gray = counter.copy()
         if self.DEBUG_MODE:
             print(f'\n{"Extracting digits from the counter":.^100}\n')
@@ -131,6 +130,7 @@ class Processor:
         maxOverlap = maxOverlap if maxOverlap is not None else 0.6
         searchBox = self.__utils__.getValueOf(self.__counters_config__, "search_box")
         searchBox = searchBox if searchBox is not None else (0, 0, self.__templates__[0][1].shape[1], self.__templates__[0][1].shape[0])
+        value: str = ""
         for i in range(digits_per_counter):
             if self.DEBUG_MODE:
                 cv2.imshow(f"Digit {i}", digits[i])
