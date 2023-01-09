@@ -29,7 +29,7 @@ class Processor:
         '''
         self.__utils__ = Utils()
         # Load the counters json
-        self.__counters_config__ = self.__utils__.loadJson("config/counters.json")
+        
         # Load the templates
         self.__templates__ = []
         template_path = self.__utils__.getAbsolutePath(template_path)
@@ -53,6 +53,14 @@ class Processor:
             raise Exception("No templates were loaded.")
         # Reset the processor
         self.reset()
+
+    def set_config(self, config_path: str = "config/counters.json"):
+        '''
+        Set the config data of the processor.
+        '''
+        self.__counters_config__ = self.__utils__.loadJson(config_path)
+        if self.__counters_config__ is None:
+            raise Exception("The config file is not valid.")
 
     def reset(self) -> bool:
         '''

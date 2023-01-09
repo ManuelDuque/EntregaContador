@@ -13,13 +13,15 @@ class Window:
     Window of user interface for the application.
     '''
 
-    def __init__(self, ui_config_path: str = "config/ui_config.json"):
+    def __init__(self, *arguments):
         # Load the utils class
         self.utils = Utils()
         # Load the processor class
         self.processor = Processor()
-        # Load the configuration file
-        self.ui_config = self.utils.loadJson(ui_config_path)
+        # Load the default configuration file
+        self.ui_config = self.utils.loadJson("config/ui_config.json")
+        # Process the arguments
+        self.__process_args__(*arguments)
         # Load the ui file
         ui_file = self.utils.getValueOf(self.ui_config, "ui", "ui_relative_path")
         ui_file = ui_file if ui_file is not None else "./../config/ui_config.ui"
@@ -30,9 +32,29 @@ class Window:
         self.ui.setWindowTitle(title)
         # Set the connections
         self.__set_events_connections__()
-        # Show the window
+        # Run the window
         self.ui.show()
     
+    def __process_args__(self, *arguments):
+        '''
+        Process the arguments to work with the application.
+        '''
+        # Iterate over the arguments
+        for i in range(0, len(arguments), 2):
+            # Get the operation and the value
+            operation = arguments[i]
+            argument = arguments[i+1]
+            # Check the operation
+            if operation == "-ui":
+                # Set the config file of the ui
+                self.ui_config = self.utils.loadJson(argument)
+                # Check the integrity of the configuration file
+                if self.ui_config is None:
+                    raise Exception("The configuration file is not valid.")
+            elif operation == "-counter":
+                # Set the counter file configuration
+                self.processor.set_config(argument)
+
     def __set_events_connections__(self):
         '''
         Set the connections of the ui.
