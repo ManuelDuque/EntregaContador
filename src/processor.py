@@ -15,10 +15,21 @@ class Processor:
         # Load the templates
         self.__templates__ = []
         template_path = self.__utils__.getAbsolutePath(template_path)
-        for filename in os.listdir(template_path):
-            image = cv2.imread(os.path.join(template_path, filename))
-            # image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            self.__templates__.append( (filename.split(".")[0], image) )
+        for folder in os.listdir(template_path):
+            # Check if the folder is a folder
+            if os.path.isdir(os.path.join(template_path, folder)):
+                new_path = os.path.join(template_path, folder)
+                # Iterate inside of all the files inside the folder
+                for file in os.listdir(new_path):
+                    # Check if the file is a file
+                    file_path = os.path.join(new_path, file)
+                    if os.path.isfile(file_path):
+                        # Rename the file with the new name
+                        try:
+                            image = cv2.imread(file_path)
+                            self.__templates__.append( (file.split(".")[0], image) )
+                        except Exception as e:
+                            print(e)
         # Check the integrity of the templates
         if len(self.__templates__) == 0:
             raise Exception("No templates were loaded.")
@@ -80,9 +91,10 @@ class Processor:
         ### Returns:
         - `list`: A list of counters (numpy.ndarray -> images) in the frame.
         '''
-        print(f'{"Getting the counters from the previous frame":.^100}')
+        if self.DEBUG_MODE:
+            print(f'{"Getting the counters from the previous frame":.^100}')
         return self.__counters_frames__
-
+    
     def extract_digits(self, counter: cv2.Mat) -> int:
         '''
         Extract the digits from the counter.
