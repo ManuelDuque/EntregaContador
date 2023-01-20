@@ -21,7 +21,8 @@ class Window:
         # Load the default configuration file
         self.ui_config = self.utils.loadJson("config/ui_config.json")
         # Process the arguments
-        self.__process_args__(*arguments)
+        if arguments[0] is not None:
+            self.__process_args__(*arguments)
         # Load the ui file
         ui_file = self.utils.getValueOf(self.ui_config, "ui", "ui_relative_path")
         ui_file = ui_file if ui_file is not None else "./../config/ui_config.ui"
@@ -32,6 +33,8 @@ class Window:
         self.ui.setWindowTitle(title)
         # Set the connections
         self.__set_events_connections__()
+        # Create the variable to save the image
+        self.__image__ = None
         # Run the window
         self.ui.show()
     
@@ -39,6 +42,7 @@ class Window:
         '''
         Process the arguments to work with the application.
         '''
+        arguments = arguments[0]
         # Iterate over the arguments
         for i in range(0, len(arguments), 2):
             # Get the operation and the value
@@ -108,7 +112,32 @@ class Window:
         '''
         Reset the ui.
         '''
-        pass
+        if self.__image__ is not None:
+            print("Resetting the ui...")
+            # Reset the viewers
+            self.ui.viewer_original.clear()
+            # Reset the counters
+            counters = self.processor.get_counters_in_frame(frame = self.__image__)
+            for index, counter in enumerate(counters):
+                # Get the corresponding counter viewer
+                viewer: QLabel = self.ui.__dict__.get(f"viewer_counter{index+1}", None)
+                if viewer is None:
+                    print(f"WARN: viewer_counter{index+1} not found")
+                    continue
+                else:   
+                    viewer.clear()
+                # Get the corresponding counter label
+                label = self.ui.__dict__.get(f"resultado{str(index+1)}", None)
+                if label is None:
+                    print(f"WARN: resultado{str(index+1)} not found")
+                    continue
+                else:
+                    label.setText("")
+            # Reset the image
+            self.__image__ = None
+            # Reset the processor
+            self.processor.reset()
+        return
 
     def __clip_event__(self) -> bool:
         '''
@@ -205,7 +234,7 @@ class Window:
             print(f"ERROR: {e}")
         return frame
     
-    def __set_image_to_viewer__(self, viewer:QLabel, frame:np.ndarray=None) -> bool:
+    def __set_image_to_viewer__(self, viewer:QLabel, frame:np.ndarray) -> bool:
         '''
         Set the image to the viewer window.
 
@@ -216,11 +245,13 @@ class Window:
         ### Returns:
         - `bool`: True if the image is set successfully, False otherwise.
         '''
-        if frame is None:
+        try:
+            # Get the pixmap from the image and show it
+            qimage = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
+            pixmap = QtGui.QPixmap.fromImage( qimage.rgbSwapped() )
+            # Show the image in the video_source window
+            viewer.setPixmap(pixmap)
+        except Exception as e:
+            print(f"ERROR {e}")
             return False
-        # Get the pixmap from the image and show it
-        qimage = QtGui.QImage(frame, frame.shape[1], frame.shape[0], QtGui.QImage.Format_RGB888)
-        pixmap = QtGui.QPixmap.fromImage( qimage.rgbSwapped() )
-        # Show the image in the video_source window
-        viewer.setPixmap(pixmap)
         return True

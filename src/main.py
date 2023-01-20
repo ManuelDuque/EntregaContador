@@ -19,7 +19,7 @@ if __name__ == "__main__":
             sys.exit(1)
         arguments = sys.argv[1:]
     # Create a window
-    Window(*arguments)
+    Window(arguments)
     # Execute the application
     app.exec_()
     # Exit the application

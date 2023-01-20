@@ -29,7 +29,7 @@ class Processor:
         '''
         self.__utils__ = Utils()
         # Load the counters json
-        
+        self.set_config()
         # Load the templates
         self.__templates__ = []
         template_path = self.__utils__.getAbsolutePath(template_path)
@@ -117,11 +117,13 @@ class Processor:
         ### Returns:
         - `list`: A list of counters (numpy.ndarray -> images) in the frame.
         '''
+        if self.REAL_TIME_REACTIVE:
+            self.__counters_config__ = self.__utils__.loadJson("config/counters.json")
         if self.DEBUG_MODE:
             print(f'{"Getting the counters from the previous frame":.^100}')
         return self.__counters_frames__
 
-    def extract_digits(self, counter: cv2.Mat) -> int:
+    def extract_digits(self, counter: cv2.Mat) -> str:
         '''
         Extract the digits from the counter.
 
