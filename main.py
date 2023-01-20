@@ -4,7 +4,7 @@
 # Path: src\main.py
 import sys
 from PyQt5.QtWidgets import QApplication
-from ui import Window
+from src.ui import Window
 
 if __name__ == "__main__":
     # Create a instance of QApplication
