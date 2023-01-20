@@ -50,6 +50,17 @@ class Utils:
             data = json.load( json_file )
         return data
     
+    def saveTextFile(self, path, result: str):
+        '''
+        Save a text file with the given result.
+
+        ### Parameters:
+        path: The relative path of the text file (str).
+        result: The text to save in the text file (str).
+        '''
+        with open( self.getAbsolutePath( path ), "w" ) as text_file:
+            text_file.write( result )
+        
     def getValueOf(self, _dict: dict, key, *keys):
         '''
         Get the value of a key or keys from the provided dictionary. If the key or keys are not found, return None.

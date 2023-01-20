@@ -14,6 +14,7 @@ class Window:
     '''
 
     DEBUG_MODE = False
+    GENERATE_REPORT = False
 
     def __init__(self, *arguments):
         # Load the utils class
@@ -99,16 +100,27 @@ class Window:
         image_url = str(dialog[0])
         if image_url is None or image_url == "":
             return False
-        # Reset the ui
-        self.__reset__()
-        # Load the image
-        image = cv2.imread(image_url)
-        # Adapt the image to the viewer size
-        image = self.__adapt_to_viewer__(viewer = self.ui.viewer_original, frame = image)
-        # Save the current image
-        self.__image__ = image
-        # Set the image to the viewer
-        return self.__set_image_to_viewer__(viewer = self.ui.viewer_original, frame = image)
+        # Load the image and save it
+        if self.__load_image__(image_url):
+            # Set the image to the viewer
+            return self.__set_image_to_viewer__(viewer = self.ui.viewer_original, frame = self.__image__)
+        else:
+            return False
+    
+    def __load_image__(self, image_url: str) -> bool:
+        try:
+            # Reset the ui
+            self.__reset__()
+            # Load the image
+            image = cv2.imread(image_url)
+            # Adapt the image to the viewer size
+            image = self.__adapt_to_viewer__(viewer = self.ui.viewer_original, frame = image)
+            # Save the current image
+            self.__image__ = image
+        except Exception as e:
+            print(f"ERROR: {e}")
+            return False
+        return True
 
     def __reset__(self):
         '''
@@ -200,16 +212,56 @@ class Window:
         '''
         Handle the event of global button.
         '''
-        # Simulate a press to the load button
-        sucessfully = self.__load_event__()
-        if not sucessfully:
-            return False
-        # Simulate a press to the clip button
-        sucessfully = self.__clip_event__()
-        if not sucessfully:
-            return False
-        # Simulate a press to the extract button
-        return self.__extract_event__()
+        if not self.GENERATE_REPORT:
+            # Simulate a press to the load button
+            sucessfully = self.__load_event__()
+            if not sucessfully:
+                return False
+            # Simulate a press to the clip button
+            sucessfully = self.__clip_event__()
+            if not sucessfully:
+                return False
+            # Simulate a press to the extract button
+            return self.__extract_event__()
+        else:
+            import os
+            # Load all the images in the images directory
+            images_dir = self.utils.getValueOf(self.ui_config, "images", "folder_relative_path")
+            images_dir = images_dir if images_dir is not None else "./../images/sources"
+            # Generate the output
+            output : str = "Sucess rate report.\n"
+            output += f'\n{"FILE NAME": <20}{"COUNTER 1": <15}{"COUNTER 2": <15}{"COUNTER 3": <15}{"SUCCESS RATE"}\n\n'
+            # For each image in the images directory
+            for image in os.listdir(images_dir):
+                print(f"Processing image {image}...")
+                # Get the output that should be generated
+                test_output = self.utils.loadJson("./config/test_outputs.json")
+                # Load the image
+                self.__load_image__(image_url = os.path.join(images_dir, image))
+                # Simulate a press to the clip button
+                sucessfully = self.__clip_event__()
+                if not sucessfully:
+                    print(f"ERROR: The image {image} could not be processed")
+                    return False
+                # Simulate a press to the extract button
+                sucessfully = self.__extract_event__()
+                if not sucessfully:
+                    print(f"ERROR: The image {image} could not be processed")
+                    return False
+                # Get the counters values that should be generated and the generated
+                test_counter = self.utils.getValueOf(test_output, image)
+                test_digits = self.utils.getValueOf(test_output, image, "digits")
+                generated_digits = self.processor.get_extracted_digits()
+                # Clear the process
+                self.processor.reset()
+                # Process the output generated and the output that should be generated
+                rate = self.processor.success_rate(expected_values=test_counter, generated_values=generated_digits)
+                # Generate the output
+                output += f'{image: <20}{generated_digits[0]: <15}{generated_digits[1]: <15}{generated_digits[2]: <15}{rate}%\n'
+            # Save the output
+            self.utils.saveTextFile("./rate_report.txt", output)
+            return True
+            
 
     def __adapt_to_viewer__(self, viewer:QLabel, frame:np.ndarray) -> np.ndarray:
         '''

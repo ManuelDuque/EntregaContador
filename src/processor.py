@@ -73,6 +73,7 @@ class Processor:
         - `bool`: True if the processor is reset successfully, False otherwise.
         '''
         self.__counters_frames__ = None
+        self.__counters_digits__ = []
         return True
     
     def get_counters_in_frame(self, frame: np.ndarray) -> list:
@@ -194,5 +195,45 @@ class Processor:
         decimals_after_coma = decimals_after_coma if decimals_after_coma is not None else 0
         if decimals_after_coma > 0:
             value = value[:-decimals_after_coma] + "." + value[-decimals_after_coma:]
+        # Save the value of the counter
+        self.__counters_digits__.append(value)
         # Return the value of the counter
         return value
+    
+    def get_extracted_digits(self) -> list:
+        '''
+        Get the extracted digits from the previous frame processed.
+        
+        ### Parameters:
+        - No parameters.
+
+        ### Returns:
+        - `list`: A list of counters (numpy.ndarray -> images) in the frame.
+        '''
+        if self.REAL_TIME_REACTIVE:
+            self.__counters_config__ = self.__utils__.loadJson("config/counters.json")
+        if self.DEBUG_MODE:
+            print(f'{"Getting the extracted digits from the previous frame":.^100}')
+        return self.__counters_digits__
+    
+    def success_rate(self, expected_values: list, generated_values: list) -> float:
+        '''
+        Get the success rate of the value extracted from the counter.
+
+        ### Parameters:
+        - `expected_values` (`list`): A list of expected values.
+        - `generated_values` (`list`): A list of generated values.
+
+        ### Returns:
+        - `float`: The success rate of the value extracted from the counter.
+        '''
+        if self.DEBUG_MODE:
+            print(f'{"Getting the success rate of the value extracted from the counter":.^100}')
+        # For each expected value, get the generated value
+        success_rate = 0
+        for i in range(len(expected_values)):
+            if expected_values[i] == generated_values[i]:
+                success_rate += 1
+        # Get the success rate percentage
+        success_rate = (success_rate / len(expected_values)) * 100
+        return success_rate

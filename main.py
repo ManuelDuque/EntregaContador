@@ -1,7 +1,4 @@
-'''
-
-'''
-# Path: src\main.py
+# Path: main.py
 import sys
 from PyQt5.QtWidgets import QApplication
 from src.ui import Window
