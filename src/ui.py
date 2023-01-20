@@ -1,8 +1,8 @@
 '''
 ui module for the application to handle the user interface events
 '''
-from utils import singleton, Utils
-from processor import Processor
+from src.utils import singleton, Utils
+from src.processor import Processor
 from PyQt5 import uic, QtGui
 from PyQt5.QtWidgets import QFileDialog, QLabel
 import cv2, numpy as np
@@ -12,6 +12,8 @@ class Window:
     '''
     Window of user interface for the application.
     '''
+
+    DEBUG_MODE = False
 
     def __init__(self, *arguments):
         # Load the utils class
@@ -226,8 +228,9 @@ class Window:
         # Get width and height of the video_source window
         width, height = viewer.width(), viewer.height()
         # Resize the frame
-        print(f"INFO: Resizing frame to {width}x{height}")
-        print(f"INFO: Previous frame shape: {frame.shape}")
+        if self.DEBUG_MODE:
+            print(f"INFO: Resizing frame to {width}x{height}")
+            print(f"INFO: Previous frame shape: {frame.shape}")
         try:
             frame = cv2.resize(frame, dsize=(width, height), interpolation=cv2.INTER_CUBIC)
         except Exception as e:
