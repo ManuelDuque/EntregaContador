@@ -1,6 +1,10 @@
 # EntregaContador
 
+> **Aviso:** Este es un proyecto educativo realizado en el contexto de la universidad en 2022. El código no sigue los estándares ni las mejores metodologías de desarrollo actuales. Ha sido publicado con fines de referencia y aprendizaje.
+
 Aplicación de escritorio para la **lectura OCR de contadores mecánicos de energía eléctrica**. Detecta hasta 3 contadores en una imagen, extrae las cifras mediante template matching multiplantilla y muestra el valor numérico resultante.
+
+![Interfaz de la aplicación mostrando la lectura de contadores](assets/image.png)
 
 ## Características principales
 
@@ -32,8 +36,8 @@ El proyecto incluye documentación complementaria en formato PDF:
 1. Clona el repositorio:
 
 ```bash
-git clone https://github.com/ManuelDuque/publicar.git
-cd publicar/EntregaContador
+git clone https://github.com/ManuelDuque/EntregaContador.git
+cd EntregaContador
 ```
 
 2. Instala las dependencias:
